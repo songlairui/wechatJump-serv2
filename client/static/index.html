@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    canvas {
+      position: unset;
+      border: thin solid red;
+    }
+
+    * {
+      margin: 0;
+      padding: 0
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    body>* {
+      /* position: absolute; */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="float">
+    <h1>PANEL</h1>
+    <pre id="log"></pre>
+  </div>
+  <canvas id="stage"></canvas>
+  <div class="actions">
+    <button>capture</button>
+  </div>
+  <script>
+    let canvasEl = document.querySelector('canvas')
+    // Create WebSocket connection.
+    const socket = new WebSocket('ws://' + window.location.host + '/test/abc');
+
+    // Connection opened
+    socket.addEventListener('open', function (event) {
+      socket.send('Hello Server!');
+    });
+
+    // Listen for messages
+    socket.addEventListener('message', function (event) {
+      document.querySelector('#log').textContent = event.data
+      if (typeof event.data === 'string') {
+        try {
+          let meta = JSON.parse(event.data)
+          console.info(meta)
+          if (meta.width && meta.height) {
+            // canvasEl.width = meta.width
+            // canvasEl.height = meta.height
+          }
+        } catch (e) {
+          console.warn('not JSON data', event.data)
+        }
+      } else if (event.data instanceof Blob) {
+        var arrayBuffer;
+        var fileReader = new FileReader();
+        fileReader.onload = function (...x) {
+          // console.info(x, this)
+          arrayBuffer = this.result;
+          var el = canvasEl
+          let BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+          var g = el.getContext('2d')
+          var blob = new Blob([arrayBuffer], { type: 'image/jpeg' })
+          var URL = window.URL || window.webkitURL
+          var img = new Image()
+          img.onload = () => {
+            el.width = img.width
+            el.height = img.height
+            g.drawImage(img, 0, 0)
+            // firstImgLoad = true
+            img.onload = null
+            img.src = BLANK_IMG
+            img = null
+            u = null
+            blob = null
+          }
+          var u = URL.createObjectURL(blob)
+          img.src = u
+        };
+        fileReader.readAsArrayBuffer(event.data);
+        console.info('reading')
+      } else {
+        window._tmp = event
+        console.log('Message from server', event.data);
+        console.info('type', typeof event.data)
+      }
+    });
+    function btnFn(e) {
+      if (e.target.tagName === 'BUTTON') {
+        // console.info(e.target)
+        socket.send(e.target.textContent)
+      }
+    }
+    document.querySelector('.actions').addEventListener('click', btnFn)
+  </script>
+</body>
+
+</html>
