@@ -22,6 +22,7 @@
         div.stage
           canvas#s1
           i.point(:style='`top:${mark.point.y + 5}px;left:${mark.point.x +5}px`')
+          i.point(v-for='(point,idx) in mark.points' :key='idx' :style='`top:${point.y}px;left:${point.x}px`')
       section
         h2 webpage get data from websocket
         p koa send data via protobuf 
@@ -36,7 +37,8 @@ export default {
       sider: 'right',
       sMsg: '',
       mark: {
-        point: { x: 0, y: 0 }
+        point: { x: 0, y: 0 },
+        points: []
       }
     }
   },
@@ -74,8 +76,15 @@ export default {
             console.info(meta)
             if (meta.width && meta.height) {
             }
-            if (meta.type === 'point') {
-              vm.mark.point = meta
+            switch (meta.type) {
+              case 'point':
+                vm.mark.point = meta
+                break
+              case 'points':
+                vm.mark.points = meta.points
+                break
+              default:
+
             }
           } catch (e) {
             console.warn('not JSON data:', event.data)
