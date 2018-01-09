@@ -2,38 +2,37 @@ const cv = require('opencv4nodejs')
 const path = require('path')
 const fs = require('fs')
 const findTopXY = require('./findTopXY')
-const grayExt = require('./grayExt')
+const grayExt2 = require('./grayExt2')
 
 let ballMat = cv.imread(path.resolve(__dirname, '..', 'ball.jpg'), 0)
 
 module.exports = dealMat
 
 function dealMat(colorMat) {
-  let grayMat = colorMat.bgrToGray()
-  let { maxLoc: ballPoint } = grayMat.matchTemplate(ballMat, 3).minMaxLoc()
-  let bg = grayMat.getData()[0]
+  let { maxLoc: ballPoint } = colorMat
+    .bgrToGray()
+    .matchTemplate(ballMat, 3)
+    .minMaxLoc()
+  let bg = colorMat.atRaw(10, 10)
   // 讲小人去掉
-  grayMat.drawRectangle(
-    new cv.Point(ballPoint.x - 8, ballPoint.y - 8),
-    new cv.Point(ballPoint.x + ballMat.cols + 8, ballPoint.y + 80),
-    new cv.Vec(bg, bg, bg),
+  colorMat.drawRectangle(
+    new cv.Point(ballPoint.x - 10, 0),
+    new cv.Point(ballPoint.x + ballMat.cols + 10, ballPoint.y + 80),
+    new cv.Vec(bg[0], bg[1], bg[2]),
     cv.LINE_8,
     -1
   )
 
   // 操作 grayMat
-  grayExt(grayMat)
+  let grayMat = grayExt2(colorMat)
 
   // cv.imshow('grayMat', grayMat)
   // cv.waitKey(1000)
-  let seed = new cv.Point(100, 0 + 5)
+  let seed = new cv.Point(100, 0 + 10)
   var blackMat = new cv.Mat(grayMat.rows + 2, grayMat.cols + 2, cv.CV_8UC1, 0)
 
-  // let rect = grayMat.floodFill(seed, 0, whiteMat, 4, 4, 8)
-  // cv.imshow('rect', grayMat)
-
   let gaussic = grayMat.gaussianBlur(new cv.Size(7, 7), 0)
-  let rect = gaussic.floodFill(seed, 0, blackMat, 5, 5, 4)
+  let rect = gaussic.floodFill(seed, 0, blackMat, 3, 3, 4)
   gaussic.drawRectangle(
     new cv.Point(0, 0),
     new cv.Point(gaussic.cols, gaussic.rows),
@@ -41,7 +40,7 @@ function dealMat(colorMat) {
     cv.LINE_8,
     8
   )
-  let bin2 = gaussic.threshold(255 - bg, 255, cv.THRESH_BINARY_INV)
+  let bin2 = gaussic.threshold(40, 255, cv.THRESH_BINARY_INV)
 
   // cv.imshow('bin2', bin2)
   // cv.waitKey(1000)
