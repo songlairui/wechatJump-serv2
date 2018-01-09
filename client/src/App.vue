@@ -16,13 +16,14 @@
         button(@click='wsSend(``)') 2.send
         button(@click='wsSend(`capture`)') 2.1 capture
         button(@click='wsSend(`analyse`)') 2.2 analyse
+        button(@click='wsSendObj(`match`)') 2.3 match Sth.
       section
         h2 webpage get image from websocket
         p koa get image from socket
         div.stage
           canvas#s1
-          i.point(:style='`top:${mark.point.y + 5}px;left:${mark.point.x +5}px`')
-          i.point(v-for='(point,idx) in mark.points' :key='idx' :style='`top:${point.y}px;left:${point.x}px`')
+          i.point(:style='`top:${mark.point.y - 5}px;left:${mark.point.x - 5}px`')
+          i.point(v-for='(point,idx) in mark.points' :key='idx' :style='`top:${point.y - 5}px;left:${point.x - 5}px`')
       section
         h2 webpage get data from websocket
         p koa send data via protobuf 
@@ -49,6 +50,10 @@ export default {
     wsSend(str) {
       if (!this.src) return console.error('no socket')
       this.src.send(str ? str.toString() : '')
+    },
+    wsSendObj(str) {
+      if (!this.src) return console.error('no socket')
+      this.src.send(JSON.stringify({ type: 'match', msg: 'test resolve' }))
     },
     getWebsocket() {
       if (this.src) return this.src
